@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# TODO:
+# - User input validation
+# - Use function for reading and validating user input
+# - Handle edge cases
+# - Add a function to delete the new folders
+# - Add a function to rename the new folders
+# - Logging (to a file)
+# - Check for required tools (e.g. mkdir, ls, etc.)
+# - Improve UI
+
 # ----------------------------------------------------------------------
 # Functions
 # ----------------------------------------------------------------------
@@ -16,7 +26,8 @@ set_directory() {
             directory="$input"
             break
         else
-            echo "The directory does not exist, try again."
+            # >&2 redirects the output to stderr
+            echo "The directory does not exist, try again." >&2
         fi
     done
 }
@@ -29,9 +40,25 @@ create_directory() {
     local dir=$1 # $1 is the first argument passed to the function
     local new_folder=$2
 
-    mkdir "$dir/${new_folder}"
+    # Check the exit status of the mkdir command
+    if ! mkdir "$dir/${new_folder}"; then
+        echo "Folder ${new_folder} could not be created."
+        return 1
+    fi
 }
 
+# Function to list the new directories
+# Input: "directory" name
+# Output: lists the new directories and their contents
+list_directories() {
+    local dir=$1
+    echo "Directories in ${dir}:"
+    ls -l "$dir"
+}
+
+# Function to create the new folders
+# Input: none
+# Output: creates the new folders and lists them
 create_folders() {
     echo "Enter the name of the new folders you want to create (enter '-q' to exit):"
 
@@ -42,8 +69,8 @@ create_folders() {
         if [[ "$folder_name" == "-q" ]]; then
             echo "Exiting."
             break
-        else
-            create_directory "$directory" "$folder_name"
+        elif ! create_directory "$directory" "$folder_name"; then
+            echo "There was a problem with the folder name, try again." >&2
         fi
     done
 
@@ -51,23 +78,38 @@ create_folders() {
     list_directories "$directory"
 }
 
-# Function to list the new directories
-# Input: "directory" name
-# Output: lists the new directories and their contents
-list_directories() {
-    local dir=$1
-    echo "Directories in ${dir}:"
-    ls "${dir}"/*/ # */ is a wildcard that matches all directories
+# Function to set the mode
+# Input: none
+# Output: sets the "mode" variable
+set_mode() {
+    while true; do
+        echo "Mode ('test' or 'run'): "
+        read -r input
+
+        if [[ "$input" == "test" || "$input" == "run" ]]; then
+            mode="$input"
+            break
+        else
+            echo "Invalid mode, try again." >&2
+        fi
+    done
 }
 
 # ----------------------------------------------------------------------
 # Main script
 # ----------------------------------------------------------------------
 
-# Ask for the path to the directory and set it
-echo "Enter the path to the directory where you want to create the new folders:"
 directory=""
-set_directory
+mode=""
+set_mode
+
+if [[ "$mode" == "test" ]]; then
+    directory="/Users/mario/test"
+elif [[ "$mode" == "run" ]]; then
+    # Ask for the path to the directory and set it
+    echo "Enter the path to the directory where you want to create the new folders:"
+    set_directory
+fi
 
 # Create the new folders
 create_folders
