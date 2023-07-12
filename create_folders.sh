@@ -19,7 +19,7 @@
 # Output: sets the "directory" variable
 set_directory() {
     while true; do
-        echo "Directory: "
+        printf "Directory: "
         read -r input
 
         if [[ -d "$input" ]]; then
@@ -27,7 +27,7 @@ set_directory() {
             break
         else
             # >&2 redirects the output to stderr
-            echo "The directory does not exist, try again." >&2
+            printf "!!! The directory does not exist, try again.\n" >&2
         fi
     done
 }
@@ -41,8 +41,11 @@ create_directory() {
     local new_folder=$2
 
     # Check the exit status of the mkdir command
-    if ! mkdir "$dir/${new_folder}"; then
-        echo "Folder ${new_folder} could not be created."
+    if mkdir "$dir/${new_folder}"; then
+        # If the directory was successfully created, add its name to the array
+        new_dirs+=("$new_folder")
+    else
+        printf "There was a problem creating the folder\n."
         return 1
     fi
 }
@@ -51,31 +54,35 @@ create_directory() {
 # Input: "directory" name
 # Output: lists the new directories and their contents
 list_directories() {
-    local dir=$1
-    echo "Directories in ${dir}:"
-    ls -l "$dir"
+    printf "New folders created:\n"
+
+    # Loop through the array and print the new directories
+    for dir in "${new_dirs[@]}"; do
+        printf "> %s\n" "$dir"
+    done
 }
 
 # Function to create the new folders
 # Input: none
 # Output: creates the new folders and lists them
 create_folders() {
-    echo "Enter the name of the new folders you want to create (enter '-q' to exit):"
+    printf "Enter the name of the new folders you want to create (enter '-q' to exit):\n"
+    new_dirs=()
 
     while true; do
-        echo "Name: "
+        printf "New Folder: "
         read -r folder_name
 
         if [[ "$folder_name" == "-q" ]]; then
-            echo "Exiting."
+            printf "Exiting.\n"
             break
         elif ! create_directory "$directory" "$folder_name"; then
-            echo "There was a problem with the folder name, try again." >&2
+            printf "!!! There was a problem with the folder name, try again.\n" >&2
         fi
     done
 
     # list the directories
-    list_directories "$directory"
+    list_directories
 }
 
 # Function to set the mode
@@ -83,14 +90,14 @@ create_folders() {
 # Output: sets the "mode" variable
 set_mode() {
     while true; do
-        echo "Mode ('test' or 'run'): "
+        printf "Mode ('test' or 'run'): "
         read -r input
 
         if [[ "$input" == "test" || "$input" == "run" ]]; then
             mode="$input"
             break
         else
-            echo "Invalid mode, try again." >&2
+            printf "!!! Invalid mode, try again.\n" >&2
         fi
     done
 }
@@ -98,7 +105,6 @@ set_mode() {
 # ----------------------------------------------------------------------
 # Main script
 # ----------------------------------------------------------------------
-
 directory=""
 mode=""
 set_mode
@@ -107,7 +113,7 @@ if [[ "$mode" == "test" ]]; then
     directory="/Users/mario/test"
 elif [[ "$mode" == "run" ]]; then
     # Ask for the path to the directory and set it
-    echo "Enter the path to the directory where you want to create the new folders:"
+    printf "Enter the path to the directory where you want to create the new folders:\n"
     set_directory
 fi
 
