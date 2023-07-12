@@ -1,14 +1,12 @@
 #!/bin/bash
 
 # TODO:
-# - User input validation
-# - Use function for reading and validating user input
-# - Handle edge cases
 # - Add a function to delete the new folders
 # - Add a function to rename the new folders
 # - Logging (to a file)
 # - Check for required tools (e.g. mkdir, ls, etc.)
 # - Improve UI
+# - Consider using different return values for different errors
 
 # ----------------------------------------------------------------------
 # Functions
@@ -22,32 +20,85 @@ set_directory() {
         printf "Directory: "
         read -r input
 
-        if [[ -d "$input" ]]; then
+        if [[ ! -d "$input" ]]; then
+            if [[ -z "$input" ]]; then
+                # >&2 redirects the output to stderr
+                printf "!!! The directory cannot be empty, try again.\n" >&2
+            elif [[ -f "$input" ]]; then
+                printf "!!! The directory cannot be a file, try again.\n" >&2
+            else
+                printf "!!! The directory does not exist, try again.\n" >&2
+            fi
+        elif [[ ! -w "$input" ]]; then
+            printf "!!! You don't have write permissions for the directory, try again.\n" >&2
+        else
             directory="$input"
             break
-        else
-            # >&2 redirects the output to stderr
-            printf "!!! The directory does not exist, try again.\n" >&2
         fi
     done
 }
 
-# Function to create a directory
+# Function to check user input for the new folder name
+# Input: "new_folder" name
+# Output: returns 0 if the name is valid, 1 otherwise
+valid_folder_name() {
+    # use local to avoid overwriting global variables
+    local folder_name=$2
+
+    # Remove leading and trailing whitespace
+    folder_name=$(echo "$folder_name" | tr -d ' ')
+
+    # Check for empty input
+    if [[ -z "$folder_name" ]]; then
+        printf "!!! The folder name cannot be empty. " >&2
+        return 1
+    fi
+
+    # Check for too long input
+    if [[ ${#folder_name} -gt 255 ]]; then
+        printf "!!! The folder name is too long (max 255 characters). " >&2
+        return 1
+    fi
+
+    # Check for invalid characters
+    if [[ "$folder_name" =~ [/\\:\*\?\"\<\>\|] ]]; then
+        printf "!!! The folder name contains invalid characters (\\ / : * ? \" < > |). " >&2
+        return 1
+    fi
+
+    # Check if the folder already exists
+    if [[ -d "$directory/${folder_name}" ]]; then
+        printf "!!! The folder already exists. " >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Function to create the new folder 
 # Input: "directory" and "new_folder" names
-# Output: creates a new folder in the directory
-create_directory() {
+# Output: creates the directory and adds its name to the array
+add_folder() {
     # use local to avoid overwriting global variables
     local dir=$1 # $1 is the first argument passed to the function
     local new_folder=$2
 
-    # Check the exit status of the mkdir command
+    # Check if the folder name is valid
+    if ! valid_folder_name "$dir" "$new_folder"; then
+        printf "Try again.\n" >&2
+        return 1
+    fi
+
+    # Try to add the folder
     if mkdir "$dir/${new_folder}"; then
         # If the directory was successfully created, add its name to the array
         new_dirs+=("$new_folder")
     else
-        printf "There was a problem creating the folder\n."
+        printf "!!! There was a problem creating the folder. " >&2
         return 1
     fi
+
+    return 0
 }
 
 # Function to list the new directories
@@ -70,14 +121,16 @@ create_folders() {
     new_dirs=()
 
     while true; do
-        printf "New Folder: "
+        printf "name: "
         read -r folder_name
 
         if [[ "$folder_name" == "-q" ]]; then
-            printf "Exiting.\n"
+            printf "Done.\n\n"
             break
-        elif ! create_directory "$directory" "$folder_name"; then
-            printf "!!! There was a problem with the folder name, try again.\n" >&2
+        elif ! add_folder "$directory" "$folder_name"; then
+            # Remark: In bash, a function returns 0 if it succeeds and 1 if it fails.
+            # The block is executed if add_folder returns 1.
+            printf "Try again.\n" >&2
         fi
     done
 
@@ -105,6 +158,7 @@ set_mode() {
 # ----------------------------------------------------------------------
 # Main script
 # ----------------------------------------------------------------------
+
 directory=""
 mode=""
 set_mode
