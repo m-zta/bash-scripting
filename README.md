@@ -1,4 +1,4 @@
-# Bash Scripts
+# Bash Scripting
 
 ## create_folders.sh
 
