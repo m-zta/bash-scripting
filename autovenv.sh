@@ -1,39 +1,76 @@
 #!/bin/bash
 
-# ---------------------------------------------------------------------
-# Script to create a new python project directory
-# ---------------------------------------------------------------------
+# TODO:
+# - Prevent user from entering a directory outside of the home directory
+# - Add option to create a git repository
 
 # ---------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------
 
+DEFAULT_PARENT_DIR="/Users/mario/code/python"
+
 # ---------------------------------------------------------------------
 # Functions
 # ---------------------------------------------------------------------
 
-get_project_directory() {
-    printf "Use default directory (/Users/mario/code/python)? [y/n]: "
+# Install tools in virtual environment
+install_tools() {
+    source "$1/bin/activate" # This warning is just because the directory exists only at runtime
+    pip install --upgrade pip
+    pip install autopep8
+    deactivate
+}
+
+# Create virtual environment and install tools
+create_venv() {
+    venvname="venv"
+    currentdir=$(pwd)
+    cd "$parentdir/$projectname" || (printf "Failed to cd to %s/%s" "$parentdir" "$projectname" && exit 1)
+    python3 -m venv "$venvname"
+    install_tools "$venvname"
+    cd "$currentdir" || exit 1
+}
+
+# Create project directory
+create_project_directory() {
+    if ! mkdir "$parentdir/$1"; then
+        printf "Failed to create project directory %s/%s" "$parentdir" "$projectname"
+        exit 1
+    else
+        printf "Created project directory %s/%s" "$parentdir" "$projectname"
+    fi
+}
+
+get_parent_directory() {
+    printf "Where do you want to create the project? \n"
+    printf "c - current directory \nd - default directory (~/code/python) \ne - enter other directory \n"
 
     while true; do
         read -r use_default
 
         case $use_default in
-            [Yy]* )
-                projectdir="/Users/mario/code/python"
+        [Cc]*)
+            parentdir=$(pwd)
+            break
+            ;;
+        [Dd]*)
+            parentdir="$DEFAULT_PARENT_DIR"
+            break
+            ;;
+        [Ee]*)
+            printf "Enter project directory: "
+            read -r parentdir
+            if [[ ! -d "$parentdir" ]]; then
+                printf "Directory %s does not exist. Try again\n" "$parentdir"
+                continue
+            else
                 break
-                ;;
-            [Nn]* )
-                printf "Enter project directory: "
-                read -r projectdir
-                if [[ ! -d "$projectdir" ]]; then
-                    printf "Directory %s does not exist. Try again" "$projectdir"
-                    continue
-                fi
-                ;;
-            * )
-                printf "Please answer yes or no: " <&2
-                ;;
+            fi
+            ;;
+        *)
+            printf "Please answer c, d or e: " <&2
+            ;;
         esac
     done
 }
@@ -42,6 +79,13 @@ get_project_directory() {
 # Main
 # ---------------------------------------------------------------------
 
+# Get parent directory
+parentdir=""
+get_parent_directory
 
-projectdir=""
-get_project_directory
+# Get project name and create project directory
+printf "You are about to create a new python project in %s \nEnter a project name: " "$parentdir"
+read -r projectname
+create_project_directory "$projectname"
+
+create_venv
