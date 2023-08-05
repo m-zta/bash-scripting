@@ -67,7 +67,8 @@ check_input_list "${list_directory}"
 check_output_directory "${output_directory}"
 
 # Read the input list and create the directories
-while IFS= read -r folder_name; do # IFS= prevents leading/trailing whitespaces from being trimmed
+while read -r folder_name; do
+    folder_name="${folder_name// /_}"  # Replace spaces with underscores
     if [[ -n "${folder_name}" ]]; then # -n checks if the string is not empty
         mkdir -p "${output_directory}/${folder_name}"
         echo "Created folder: ${output_directory}/${folder_name}"
