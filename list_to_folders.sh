@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Description:
+# Description: This script reads a list of folder names from a .txt file and
+#              creates the folders in the specified output directory.
+# Usage:       ./list_to_folders.sh <input_list> <output_directory>
 
 # --------------------------------------------------------------------------------
 # Global variables
