@@ -75,6 +75,23 @@ get_parent_directory() {
     done
 }
 
+create_git_repository() {
+    printf "Want to create a git repository? (y/n) "
+    read -r answer
+
+    if [[ $answer == [Yy]* ]]; then
+        cd "$parentdir/$projectname" || exit 1
+        git init
+        touch .gitignore
+        echo "venv" >>.gitignore
+        echo ".DS_Store" >>.gitignore
+        echo ".vscode" >>.gitignore
+        touch README.md
+        git add .
+        git commit -m "Initial commit"
+    fi
+}
+
 # ---------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------
@@ -89,3 +106,7 @@ read -r projectname
 create_project_directory "$projectname"
 
 create_venv
+
+create_git_repository
+
+printf "\nDone!\n"
