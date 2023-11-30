@@ -44,9 +44,9 @@ url=$2
 check_directory $directory
 check_url $url
 
-touch $directory/README.md
-echo "- [Download]($url)" >> $directory/README.md
-printf "Add download link to $directory/README.md - Done.\n"
+touch $directory/README.txt
+echo "Download link:\n ${url}" >> $directory/README.txt
+printf "Succcessfully added download link to ${directory}.\n"
 
 exit 0
 
