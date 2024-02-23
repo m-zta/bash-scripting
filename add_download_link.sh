@@ -4,7 +4,7 @@
 # Constants
 # ====================================================================
 
-DESCRIPTION="Description: This script is a tool for my personal use.\nUsage: add_download_link.sh <directory> <url>"
+DESCRIPTION="Description: This script is a tool for my personal use.Usage: add_download_link.sh <directory> <url>"
 
 # ====================================================================
 # Functions

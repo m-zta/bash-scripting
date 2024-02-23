@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Description: Create new folders in a given directory
+# Usage: create_folders.sh
+
 # TODO:
 # - Add a function to delete the new folders
 # - Add a function to rename the new folders
@@ -113,9 +116,8 @@ list_directories() {
     done
 }
 
-# Function to create the new folders
-# Input: none
-# Output: creates the new folders and lists them
+# Input: None
+# Output: Creates the new folders and lists them
 create_folders() {
     printf "Enter the name of the new folders you want to create (enter '-q' to exit):\n"
     new_dirs=()
@@ -138,29 +140,38 @@ create_folders() {
     list_directories
 }
 
-# Function to set the mode
-# Input: none
-# Output: sets the "mode" variable
+# Input: None
+# Output: Sets the "mode" variable according to user input
 set_mode() {
-    while true; do
+    count=0
+    
+    # Try to get the mode from the user input 5 times
+    while count -lt 5; do
         printf "Mode ('test' or 'run'): "
-        read -r input
+        read -r user_input
 
-        if [[ "$input" == "test" || "$input" == "run" ]]; then
-            mode="$input"
+        if [[ "$user_input" == "test" || "$user_input" == "run" ]]; then
+            mode="$user_input"
             break
         else
-            printf "!!! Invalid mode, try again.\n" >&2
+            printf "!!! Invalid mode input, try again.\n" >&2
         fi
     done
+
+    # If the user input was invalid 5 times, exit the script
+    if [[ -z "$mode" ]]; then
+        printf "!!! No mode selected, exiting.\n" >&2
+        exit 1
+    fi
 }
 
 # ----------------------------------------------------------------------
-# Main script
+# Main
 # ----------------------------------------------------------------------
 
 directory=""
 mode=""
+
 set_mode
 
 if [[ "$mode" == "test" ]]; then
