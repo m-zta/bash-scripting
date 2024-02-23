@@ -2,26 +2,31 @@
 
 # Description: Remove all empty folders in a given directory
 # Usage: remove_empty_folders.sh <directory>
+#
+# NOTE: Not working as expected yet
 
 # ----------------------------------------------------------------
 # Functions
 # ----------------------------------------------------------------
 
 remove_empty() {
-    # Loop through all files and folders in the given directory
-    for file in "${1}"/*; do
-        # Check if the current file is a directory
-        if [[ -d "${file}" ]]; then
-            # Check if the current directory is empty
-            if [[ -z "$(ls -A "${file}")" ]]; then
-                # Remove the current directory
-                rm -rf "${file}"
-            else
-                # Remove all empty folders in the current directory
+    # Check if directory is empty and delete if so
+    if [[ -z ${1} ]]; then
+        rmdir "${1}"
+    else
+        # Loop through all files and folders in the given directory
+        for file in "${1}"/*; do
+            printf "File: %s\n" "${file}"
+            # Check if the current file is a directory
+            if [[ -d "${file}" ]]; then
                 remove_empty "${file}"
+                if [[ -z $(ls -A "${file}") ]]; then
+                    printf "Delete: %s\n" "${file}"
+                    rmdir "${file}"
+                fi
             fi
-        fi
-    done
+        done
+    fi
 }
 
 # ----------------------------------------------------------------
@@ -41,5 +46,4 @@ if [ ! -d "$1" ]; then
 fi
 
 # Remove all empty folders
-remove_empty "$1"
 remove_empty "$1"
