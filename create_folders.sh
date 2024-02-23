@@ -15,35 +15,42 @@
 # Functions
 # ----------------------------------------------------------------------
 
-# Function to set the directory from user input
-# Input: none
-# Output: sets the "directory" variable
+# Set the directory from user input
+# Input: None
+# Output: Sets the "directory" variable
 set_directory() {
-    while true; do
+    count=0
+    while [[ count -lt 5 ]]; do
         printf "Directory: "
-        read -r input
+        read -r user_input
 
-        if [[ ! -d "$input" ]]; then
-            if [[ -z "$input" ]]; then
+        # Input validation
+        if [[ ! -d "$user_input" ]]; then
+            if [[ -z "$user_input" ]]; then
                 # >&2 redirects the output to stderr
                 printf "!!! The directory cannot be empty, try again.\n" >&2
-            elif [[ -f "$input" ]]; then
+            elif [[ -f "$user_input" ]]; then
                 printf "!!! The directory cannot be a file, try again.\n" >&2
             else
                 printf "!!! The directory does not exist, try again.\n" >&2
             fi
-        elif [[ ! -w "$input" ]]; then
+        elif [[ ! -w "$user_input" ]]; then
             printf "!!! You don't have write permissions for the directory, try again.\n" >&2
-        else
-            directory="$input"
-            break
-        fi
+
+        directory="$user_input"
+        break
     done
+
+    # User failed to provide a valid directory 5 times
+    if [[ -z "$directory" ]]; then
+        printf "!!! No directory selected, exiting.\n" >&2
+        exit 1
+    fi
 }
 
-# Function to check user input for the new folder name
-# Input: "new_folder" name
-# Output: returns 0 if the name is valid, 1 otherwise
+# Check validity of user input for the new folder name
+# Input: Name of the new folder
+# Output: 0 if the folder name is valid, 1 if it's invalid
 valid_folder_name() {
     # use local to avoid overwriting global variables
     local folder_name=$2
@@ -57,14 +64,14 @@ valid_folder_name() {
         return 1
     fi
 
-    # Check for too long input
+    # Check for length
     if [[ ${#folder_name} -gt 255 ]]; then
         printf "!!! The folder name is too long (max 255 characters). " >&2
         return 1
     fi
 
     # Check for invalid characters
-    if [[ "$folder_name" =~ [/\\:\*\?\"\<\>\|] ]]; then
+    if [[ "$folder_name" =~ [/\\\:\*\?\"\<\>\|] ]]; then
         printf "!!! The folder name contains invalid characters (\\ / : * ? \" < > |). " >&2
         return 1
     fi
@@ -78,7 +85,6 @@ valid_folder_name() {
     return 0
 }
 
-# Function to create the new folder 
 # Input: "directory" and "new_folder" names
 # Output: creates the directory and adds its name to the array
 add_folder() {
@@ -104,7 +110,6 @@ add_folder() {
     return 0
 }
 
-# Function to list the new directories
 # Input: "directory" name
 # Output: lists the new directories and their contents
 list_directories() {
@@ -146,7 +151,7 @@ set_mode() {
     count=0
     
     # Try to get the mode from the user input 5 times
-    while count -lt 5; do
+    while [[ count -lt 5 ]]; do
         printf "Mode ('test' or 'run'): "
         read -r user_input
 
@@ -158,7 +163,7 @@ set_mode() {
         fi
     done
 
-    # If the user input was invalid 5 times, exit the script
+    # User failed to provide a valid mode 5 times
     if [[ -z "$mode" ]]; then
         printf "!!! No mode selected, exiting.\n" >&2
         exit 1
@@ -175,7 +180,7 @@ mode=""
 set_mode
 
 if [[ "$mode" == "test" ]]; then
-    directory="/Users/mario/test"
+    directory="/Users/mario/code/bash/scripting"
 elif [[ "$mode" == "run" ]]; then
     # Ask for the path to the directory and set it
     printf "Enter the path to the directory where you want to create the new folders:\n"
