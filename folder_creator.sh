@@ -2,9 +2,9 @@
 
 DESCRIPTION="Easily create multiple folders inside a directory."
 
-TODO:
-- Add a help message
-- Optimize the structure of the script
+# TODO:
+# - Add a help message
+# - Optimize the structure of the script
 
 # ==============================================================================
 # Functions
@@ -50,9 +50,17 @@ is_valid_folder_name() {
 # Get the folder path from the user and store it in the folder_path variable
 get_folder_path() {
     local count=0
+    
+    printf "Use the current directory ($(pwd))? (y/n): "
+    read -r user_input
+    
+    if [[ "$user_input" == "y" ]]; then
+        folder_path=$(pwd)
+        return
+    fi
 
     while [[ count -lt 5 ]]; do
-        printf "Path: "
+        printf "Enter path: "
         read -r user_input
 
         # input validation
@@ -230,5 +238,7 @@ else
     exit 1
 fi
 
+printf "--> Done!\n"
+printf "Folders created:\n"
 list_folders
 
