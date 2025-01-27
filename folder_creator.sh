@@ -14,7 +14,6 @@ DESCRIPTION="Easily create multiple folders inside a directory."
 # @param $1: folder name
 # @return: 0 if the folder name is valid, 1 otherwise
 is_valid_folder_name() {
-    # Use local to avoid overwriting global variables
     local folder_name=$1
 
     # Remove all spaces from the folder name
@@ -81,6 +80,7 @@ get_folder_path() {
             continue
         fi
 
+        # Set the folder path
         folder_path="$user_input"
         break
     done
@@ -111,6 +111,37 @@ get_mode() {
     done
 }
 
+ask_folder_confirmation() {
+    printf "The following folders will be created:\n"
+    for name in "${names_list[@]}"; do
+        printf "%s\n" "$name"
+    done
+
+    printf "Do you want to continue and create the folders? (y/n): "
+    read -r user_input
+
+    if [[ "$user_input" != "y" || "$user_input" != "Y" ]]; then
+        printf "Creating folders aborted. Exiting program.\n"
+        exit 0
+    fi
+
+    return 0 # 0 in shell scripts means success, which translates to 'true' for other languages
+}
+
+# Create folders from a list of names
+create_folders() {
+    printf "Creating folders...\n"
+    for name in "${names_list[@]}"; do
+        mkdir "$folder_path/$name"
+    done
+}
+
+# List the folders created
+list_folders() {
+    cd "$folder_path" || exit 1
+    ls
+}
+
 # Create multiple folders in regular mode
 regular_mode() {
     name_stem=""
@@ -130,10 +161,10 @@ regular_mode() {
     done
 
     if [[ count -eq 5 && "$name_stem" == "" ]]; then
-        printf "!!! You failed at providing a valid name stem. Exiting program.\n" >&2
+        printf "!!! You failed to enter a valid name stem. Exiting program.\n" >&2
         exit 1
     fi
-        
+
     # Get the number of digits in the number of folders
     count=0
     while [[ count -lt 5 ]]; do
@@ -143,13 +174,13 @@ regular_mode() {
         if [[ 0 -lt "$number_of_digits" && "$number_of_digits" -lt 10 ]]; then
             break
         else
-            printf "!!! The number of digits must be a positive integer. " >&2
+            printf "!!! The number of digits must be a positive integer lower than 10." >&2
             count=$((count + 1))
         fi
     done
 
     if [[ count -eq 5 ]]; then
-        printf "!!! You failed at providing a valid number of digits. Exiting program.\n" >&2
+        printf "!!! You failed to enter a valid number of digits. Exiting program.\n" >&2
         exit 1
     fi
     
@@ -161,10 +192,28 @@ regular_mode() {
         printf "Range (start end): "
         read -r start end
 
+        if [[ "$start" == "" || "$end" == "" ]]; then
+            printf "!!! The range cannot be empty. " >&2
+            count=$((count + 1))
+            continue
+        fi
+
+        if [[ ! "$start" =~ ^[0-9]+$ || ! "$end" =~ ^[0-9]+$ ]]; then
+            printf "!!! The range must be composed of integers. " >&2
+            count=$((count + 1))
+            continue
+        fi
+
+        if [[ "$start" -lt 0 || "$end" -lt 0 ]]; then
+            printf "!!! The range (start and end) must be positive. " >&2
+            count=$((count + 1))
+            continue
+        fi
+
         if [[ "$start" -lt "$end" ]]; then
             break
         else
-            printf "!!! The start number must be less than the end number. " >&2
+            printf "!!! The start number must be smaller than the end number. " >&2
             count=$((count + 1))
         fi
     done
@@ -176,33 +225,24 @@ regular_mode() {
 
     # Create the folder list
     for ((i = start; i <= end; i++)); do
+        # Create the folder name with the correct number of digits (padded with zeros)
         folder_name="${name_stem}$(printf "%0${number_of_digits}d" "$i")"
         names_list+=("$folder_name")
-    done    
-
-    # Create the folders
-    create_folders
-}
-
-# Create folders from a list of names
-create_folders() {
-    printf "Creating folders...\n"
-    for name in "${names_list[@]}"; do
-        mkdir "$folder_path/$name"
     done
-}
 
-# List the folders created
-list_folders() {
-    cd "$folder_path" || exit 1
-    ls
+    if ask_folder_confirmation; then
+        create_folders
+    else
+        printf "Creating folders aborted. Exiting program.\n"
+        exit 0
+    fi
 }
 
 # Create multiple folders in single mode
 single_mode() {
-    printf "Enter the folder names. Enter -q to stop.\n"
+    printf "Enter the folder names. Enter '-q' when done.\n"
     while true; do
-        printf "Folder name: "
+        printf "Next folder name: "
         read -r folder_name
 
         if [[ "$folder_name" == "-q" ]]; then
@@ -214,7 +254,12 @@ single_mode() {
         fi
     done
 
-    create_folders
+    if ask_folder_confirmation; then
+        create_folders
+    else
+        printf "Creating folders aborted. Exiting program.\n"
+        exit 0
+    fi
 }
 
 # ==============================================================================
