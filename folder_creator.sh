@@ -120,7 +120,7 @@ ask_folder_confirmation() {
     printf "Do you want to continue and create the folders? (y/n): "
     read -r user_input
 
-    if [[ "$user_input" != "y" || "$user_input" != "Y" ]]; then
+    if [[ "$user_input" != "y" && "$user_input" != "Y" ]]; then
         printf "Creating folders aborted. Exiting program.\n"
         exit 0
     fi
